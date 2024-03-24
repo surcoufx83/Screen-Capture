@@ -1,4 +1,5 @@
 ﻿using ColorThiefDotNet;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -73,8 +74,8 @@ namespace Screen_Capture
                 captureGraphics.CopyFromScreen(captureRectangle.Left + (int)((float)captureRectangle.Width * .1), captureRectangle.Top + (int)((float)captureRectangle.Height * .1), 0, 0, captureRectangle.Size);
                 // captureBmp.Save(@"D:\temp\capture.jpg", ImageFormat.Jpeg);
                 QuantizedColor quantizedColor = colors.GetColor(captureBmp);
-                List<QuantizedColor> quantizedColors =  colors.GetPalette(captureBmp);
-                File.WriteAllText(targetFile, "{ \"singleColor\": [" + quantizedColor.Color.R + ", " + quantizedColor.Color.G + ", " + quantizedColor.Color.B + "], \"onetime\": true }", Encoding.UTF8);
+                ColorDefinition colorDefinition = new ColorDefinition(quantizedColor);
+                File.WriteAllText(targetFile, colorDefinition.ToString(), Encoding.UTF8);
                 Thread.Sleep(1000);
             }
         }
@@ -84,9 +85,23 @@ namespace Screen_Capture
     public struct ColorDefinition
     {
         public int[] singleColor;
-        public int darkness;
+        public int brightness;
         public bool isDark;
         public bool onetime;
+
+        public ColorDefinition(QuantizedColor color)
+        {
+            singleColor = new int[] { color.Color.R, color.Color.G, color.Color.B };
+            brightness = (int)(color.Color.ToHsl().L * 255.0);
+            isDark = color.IsDark;
+            onetime = true;
+        }
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
+
     }
 
 }
